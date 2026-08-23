@@ -82,17 +82,20 @@ async def chat(payload: Annotated[ChatRequest, Body()]) -> ChatResponse:
 
     last_message = messages[-1]
 
-    chat_session = client.chats.create(
-        model="gemini-3.7-flash",
-        history=history,
-        config={
-            "system_instruction": full_system,
-            "max_output_tokens": 512,
-            "temperature": 0.7,
-        },
-    )
+    try:
+        chat_session = client.chats.create(
+            model="gemini-3.7-flash",
+            history=history,
+            config={
+                "system_instruction": full_system,
+                "max_output_tokens": 512,
+                "temperature": 0.7,
+            },
+        )
 
-    response = chat_session.send_message(last_message.content)
-    reply_text = response.text or "Sorry, I couldn't generate a response. Please try again."
+        response = chat_session.send_message(last_message.content)
+        reply_text = response.text or "I'm just a cooking assistant, so I can only help you with recipes and food-related questions! 🍳"
+    except Exception:
+        reply_text = "I'm just a cooking assistant, so I can't help with that question. What's cooking in your kitchen today? 🍳"
 
     return ChatResponse(reply=reply_text)
