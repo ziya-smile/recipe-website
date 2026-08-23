@@ -1,8 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import ChatBot from './components/ChatBot.vue'
+import { fetchRecipes } from './api'
 
+const router = useRouter()
 const isDark = ref(false)
+const searchQuery = ref('')
+const suggestions = ref([])
+const showSuggestions = ref(false)
+const searchWrapperRef = ref(null)
 
 function setTheme(theme) {
   isDark.value = theme === 'dark'
@@ -20,7 +27,44 @@ onMounted(() => {
     isDark.value = true
     document.documentElement.classList.add('dark')
   }
+
+  document.addEventListener('click', handleClickOutside)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+function handleClickOutside(e) {
+  if (searchWrapperRef.value && !searchWrapperRef.value.contains(e.target)) {
+    showSuggestions.value = false
+  }
+}
+
+let timeout = null
+watch(searchQuery, (val) => {
+  clearTimeout(timeout)
+  if (!val.trim()) {
+    suggestions.value = []
+    showSuggestions.value = false
+    return
+  }
+  timeout = setTimeout(async () => {
+    try {
+      const res = await fetchRecipes(val.trim())
+      suggestions.value = res.slice(0, 5)
+      showSuggestions.value = true
+    } catch {
+      suggestions.value = []
+    }
+  }, 200)
+})
+
+function selectRecipe(recipe) {
+  searchQuery.value = ''
+  showSuggestions.value = false
+  router.push(`/recipes/${recipe.id}`)
+}
 </script>
 
 <template>
@@ -31,13 +75,40 @@ onMounted(() => {
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/recipes">Recipes</RouterLink>
       </nav>
-      <div class="theme-toggle">
-        <button class="theme-option" :class="{ active: !isDark }" @click="setTheme('light')">
-          <span>☀️</span> Light
-        </button>
-        <button class="theme-option" :class="{ active: isDark }" @click="setTheme('dark')">
-          <span>🌙</span> Dark
-        </button>
+      <div class="header-right">
+        <div class="header-search" ref="searchWrapperRef">
+          <svg class="header-search-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input
+            type="search"
+            class="header-search-input"
+            placeholder="Search recipes..."
+            v-model="searchQuery"
+            @focus="if(suggestions.length) showSuggestions = true"
+          />
+          <div v-if="showSuggestions && suggestions.length" class="suggestions-dropdown">
+            <div
+              v-for="recipe in suggestions"
+              :key="recipe.id"
+              class="suggestion-item"
+              @click="selectRecipe(recipe)"
+            >
+              <img v-if="recipe.image_url" :src="recipe.image_url" class="suggestion-thumb" alt="" />
+              <div v-else class="suggestion-thumb-placeholder">🍽️</div>
+              <div class="suggestion-info">
+                <div class="suggestion-title">{{ recipe.title }}</div>
+                <div class="suggestion-desc">{{ recipe.description }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="theme-toggle">
+          <button class="theme-option" :class="{ active: !isDark }" @click="setTheme('light')">
+            <span>☀️</span> Light
+          </button>
+          <button class="theme-option" :class="{ active: isDark }" @click="setTheme('dark')">
+            <span>🌙</span> Dark
+          </button>
+        </div>
       </div>
     </header>
     <RouterView />
