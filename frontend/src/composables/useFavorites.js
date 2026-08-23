@@ -1,38 +1,40 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { supabase } from '../supabase'
 
-const STORAGE_KEY = 'recipe_website_favorites'
-
-function loadFavorites() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return new Set()
-    const parsed = JSON.parse(raw)
-    return new Set(Array.isArray(parsed) ? parsed : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function saveFavorites(favoritesSet) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...favoritesSet]))
-  } catch {
-    // Ignore storage quota or disabled localStorage errors
-  }
-}
-
-// Shared singleton state across components
-const favorites = ref(loadFavorites())
+const favorites = ref(new Set())
 const user = ref(null)
+
+async function fetchUserFavorites(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('favorites')
+      .select('recipe_id')
+      .eq('user_id', userId)
+    
+    if (error) throw error
+    if (data) {
+      favorites.value = new Set(data.map(row => Number(row.recipe_id)))
+    }
+  } catch (err) {
+    console.error('Error fetching favorites:', err)
+  }
+}
 
 // Initialize user and auth listener
 supabase.auth.getSession().then(({ data }) => {
   user.value = data.session?.user ?? null
+  if (user.value) {
+    fetchUserFavorites(user.value.id)
+  }
 })
 
 supabase.auth.onAuthStateChange((_, session) => {
   user.value = session?.user ?? null
+  if (user.value) {
+    fetchUserFavorites(user.value.id)
+  } else {
+    favorites.value = new Set()
+  }
 })
 
 export function useFavorites() {
@@ -44,18 +46,41 @@ export function useFavorites() {
     return favorites.value.has(Number(id))
   }
 
-  function toggleFavorite(id) {
-    if (!isLoggedIn.value) return
+  async function toggleFavorite(id) {
+    if (!isLoggedIn.value || !user.value) return
     if (id === undefined || id === null) return
     const numId = Number(id)
     const next = new Set(favorites.value)
-    if (next.has(numId)) {
-      next.delete(numId)
-    } else {
-      next.add(numId)
+    
+    try {
+      if (next.has(numId)) {
+        next.delete(numId)
+        favorites.value = next
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.value.id)
+          .eq('recipe_id', numId)
+        if (error) {
+          next.add(numId)
+          favorites.value = new Set(next)
+          throw error
+        }
+      } else {
+        next.add(numId)
+        favorites.value = next
+        const { error } = await supabase
+          .from('favorites')
+          .insert({ user_id: user.value.id, recipe_id: numId })
+        if (error) {
+          next.delete(numId)
+          favorites.value = new Set(next)
+          throw error
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
     }
-    favorites.value = next
-    saveFavorites(next)
   }
 
   const favoritesCount = computed(() => (isLoggedIn.value ? favorites.value.size : 0))
