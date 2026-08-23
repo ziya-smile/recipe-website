@@ -135,29 +135,55 @@ function selectRecipe(recipe) {
         <div class="auth-nav">
           <template v-if="user">
             <div class="user-menu-container" ref="userMenuRef">
-              <button class="auth-btn user-menu-toggle" @click="showUserMenu = !showUserMenu">
-                <span>👤</span>
+              <button 
+                class="auth-btn user-menu-toggle" 
+                :class="{ 'menu-open': showUserMenu }"
+                @click="showUserMenu = !showUserMenu"
+              >
+                <div class="user-avatar-badge">
+                  {{ user.email ? user.email.charAt(0).toUpperCase() : '👤' }}
+                </div>
                 <span class="user-email-truncate" :title="user.email">{{ user.email }}</span>
-                <span class="dropdown-caret">▼</span>
+                <svg class="dropdown-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
               </button>
+              
               <div v-if="showUserMenu" class="user-dropdown-menu">
                 <div class="dropdown-user-info">
-                  <span class="dropdown-label">Signed in as</span>
-                  <span class="dropdown-email" :title="user.email">{{ user.email }}</span>
+                  <div class="dropdown-user-avatar-large">
+                    {{ user.email ? user.email.charAt(0).toUpperCase() : '👤' }}
+                  </div>
+                  <div class="dropdown-user-text">
+                    <span class="dropdown-label">Signed in as</span>
+                    <span class="dropdown-email" :title="user.email">{{ user.email }}</span>
+                  </div>
                 </div>
+
                 <div class="dropdown-divider"></div>
-                <RouterLink
-                  v-if="isLoggedIn"
-                  to="/favorites"
-                  class="dropdown-item saved-favorites-item"
-                  @click="showUserMenu = false"
-                >
-                  <span>❤️ Saved Recipes</span>
-                  <span class="favorites-count-badge">{{ favoritesCount }}</span>
-                </RouterLink>
+
+                <div class="dropdown-links-group">
+                  <RouterLink
+                    v-if="isLoggedIn"
+                    to="/favorites"
+                    class="dropdown-item saved-favorites-item"
+                    @click="showUserMenu = false"
+                  >
+                    <div class="dropdown-item-content">
+                      <span class="dropdown-icon-wrapper">❤️</span>
+                      <span>Saved Recipes</span>
+                    </div>
+                    <span class="favorites-count-badge">{{ favoritesCount }}</span>
+                  </RouterLink>
+                </div>
+
                 <div class="dropdown-divider"></div>
+
                 <button class="dropdown-item logout-action-btn" @click="handleSignOut">
-                  <span>🚪</span> Sign Out
+                  <div class="dropdown-item-content">
+                    <span class="dropdown-icon-wrapper logout-icon">🚪</span>
+                    <span>Sign Out</span>
+                  </div>
                 </button>
               </div>
             </div>
@@ -191,59 +217,114 @@ function selectRecipe(recipe) {
 .user-menu-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  max-width: 220px;
+  gap: 8px;
+  max-width: 240px;
   cursor: pointer;
+  background: var(--card-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+  padding: 6px 12px 6px 6px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.user-menu-toggle:hover,
+.user-menu-toggle.menu-open {
+  background: var(--card-border, rgba(255, 255, 255, 0.1));
+  border-color: var(--primary, #aa3bff);
+}
+
+.user-avatar-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary, #aa3bff), #7928ca);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .user-email-truncate {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.dropdown-caret {
-  font-size: 10px;
-  opacity: 0.7;
+.dropdown-chevron {
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.user-menu-toggle.menu-open .dropdown-chevron {
+  transform: rotate(180deg);
 }
 
 .user-dropdown-menu {
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
-  width: 240px;
+  top: calc(100% + 10px);
+  width: 270px;
   background: var(--card-bg, #1a1d26);
   border: 1px solid var(--card-border, #2a2e3d);
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
   z-index: 100;
   overflow: hidden;
-  animation: dropdownFadeIn 0.15s ease;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(-8px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .dropdown-user-info {
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+}
+
+.dropdown-user-avatar-large {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary, #aa3bff), #7928ca);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(170, 59, 255, 0.3);
+}
+
+.dropdown-user-text {
+  overflow: hidden;
 }
 
 .dropdown-label {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   color: var(--text-muted, #94a3b8);
   margin-bottom: 2px;
+  font-weight: 600;
 }
 
 .dropdown-email {
@@ -262,28 +343,49 @@ function selectRecipe(recipe) {
   margin: 0;
 }
 
+.dropdown-links-group {
+  padding: 6px;
+}
+
 .dropdown-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 16px;
+  padding: 10px 12px;
   font-size: 13px;
+  font-weight: 500;
   color: var(--text, #f8fafc);
   background: transparent;
   border: none;
+  border-radius: 8px;
   text-align: left;
   text-decoration: none;
   box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.saved-favorites-item {
-  background: rgba(255, 255, 255, 0.02);
-  transition: background 0.15s;
+.dropdown-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dropdown-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 13px;
 }
 
 .saved-favorites-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--primary, #aa3bff);
 }
 
 .favorites-count-badge {
@@ -291,17 +393,24 @@ function selectRecipe(recipe) {
   color: white;
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(170, 59, 255, 0.3);
 }
 
 .logout-action-btn {
-  cursor: pointer;
+  margin: 6px;
+  width: calc(100% - 12px);
   color: #f87171;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 
 .logout-action-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+  color: #ef4444;
+}
+
+.logout-icon {
   background: rgba(248, 113, 113, 0.1);
 }
 </style>
