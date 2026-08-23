@@ -41,6 +41,12 @@ function handleClickOutside(e) {
   }
 }
 
+function handleFocus() {
+  if (suggestions.value.length) {
+    showSuggestions.value = true
+  }
+}
+
 let timeout = null
 watch(searchQuery, (val) => {
   clearTimeout(timeout)
@@ -83,7 +89,7 @@ function selectRecipe(recipe) {
             class="header-search-input"
             placeholder="Search recipes..."
             v-model="searchQuery"
-            @focus="if(suggestions.length) showSuggestions = true"
+            @focus="handleFocus"
           />
           <div v-if="showSuggestions && suggestions.length" class="suggestions-dropdown">
             <div
