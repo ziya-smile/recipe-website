@@ -12,7 +12,7 @@ const checkedIngredients = ref(new Set())
 const completedSteps = ref(new Set())
 const copyStatus = ref('')
 const unitSystem = ref('metric') // 'metric' or 'imperial'
-const { isFavorite, toggleFavorite } = useFavorites()
+const { isLoggedIn, isFavorite, toggleFavorite } = useFavorites()
 
 function getIngredientKey(item) {
   if (typeof item === 'string') return item
@@ -188,7 +188,7 @@ watch(
     <div class="recipe-top-bar">
       <RouterLink class="back" to="/recipes">← All recipes</RouterLink>
       <button
-        v-if="recipe"
+        v-if="recipe && isLoggedIn"
         type="button"
         class="fav-toggle-btn"
         :class="{ 'is-active': isFavorite(recipe.id) }"

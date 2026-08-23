@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { supabase } from '../supabase'
 
 const STORAGE_KEY = 'recipe_website_favorites'
 
@@ -23,14 +24,28 @@ function saveFavorites(favoritesSet) {
 
 // Shared singleton state across components
 const favorites = ref(loadFavorites())
+const user = ref(null)
+
+// Initialize user and auth listener
+supabase.auth.getSession().then(({ data }) => {
+  user.value = data.session?.user ?? null
+})
+
+supabase.auth.onAuthStateChange((_, session) => {
+  user.value = session?.user ?? null
+})
 
 export function useFavorites() {
+  const isLoggedIn = computed(() => !!user.value)
+
   function isFavorite(id) {
+    if (!isLoggedIn.value) return false
     if (id === undefined || id === null) return false
     return favorites.value.has(Number(id))
   }
 
   function toggleFavorite(id) {
+    if (!isLoggedIn.value) return
     if (id === undefined || id === null) return
     const numId = Number(id)
     const next = new Set(favorites.value)
@@ -43,13 +58,13 @@ export function useFavorites() {
     saveFavorites(next)
   }
 
-  const favoritesCount = computed(() => favorites.value.size)
+  const favoritesCount = computed(() => (isLoggedIn.value ? favorites.value.size : 0))
 
   return {
     favorites,
     favoritesCount,
+    isLoggedIn,
     isFavorite,
     toggleFavorite,
   }
 }
-

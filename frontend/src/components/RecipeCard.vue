@@ -10,7 +10,7 @@ defineProps({
 })
 
 const imgError = ref(false)
-const { isFavorite, toggleFavorite } = useFavorites()
+const { isLoggedIn, isFavorite, toggleFavorite } = useFavorites()
 </script>
 
 <template>
@@ -27,6 +27,7 @@ const { isFavorite, toggleFavorite } = useFavorites()
           <span>🍳 Photo coming soon</span>
         </div>
         <button
+          v-if="isLoggedIn"
           type="button"
           class="card-fav-btn"
           :class="{ 'is-active': isFavorite(recipe.id) }"
