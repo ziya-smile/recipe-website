@@ -14,9 +14,10 @@ const filteredRecipes = computed(() => {
   return list.filter((recipe) => {
     const titleMatch = recipe.title?.toLowerCase().includes(q)
     const descMatch = recipe.description?.toLowerCase().includes(q)
-    const ingMatch = recipe.ingredients?.some((ing) =>
-      ing.toLowerCase().includes(q)
-    )
+    const ingMatch = recipe.ingredients?.some((ing) => {
+      const ingredientName = typeof ing === 'string' ? ing : ing?.name
+      return ingredientName?.toLowerCase().includes(q)
+    })
     return titleMatch || descMatch || ingMatch
   })
 })
