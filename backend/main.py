@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles                                                                                                                            
                                                                                                                                                                        
 from admin import router as admin_router                                                                                                                               
+from chat import router as chat_router
 from models import Recipe, RecipeCreate                                                                                                                                
 from store import (                                                                                                                                                    
     create_recipe,                                                                                                                                                     
@@ -33,6 +34,7 @@ if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")                                                                                        
                                                                                                                                                                        
 app.include_router(admin_router)
+app.include_router(chat_router)
 
 
 @app.get("/api/media/{filename}")
