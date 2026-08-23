@@ -1,16 +1,26 @@
-# Vue 3 + Vite
+# Recipe Website - Frontend
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This is the Vue 3 + Vite single-page application for the Recipe Website.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Features
+- Vue 3 with `<script setup>` and Composition API
+- Vue Router for client-side navigation (Home, Recipes, Recipe Detail, Auth)
+- Supabase Authentication (`Sign In`, `Sign Up`, `Sign Out`)
+- User-specific favorites system (only available to logged-in users)
+- Responsive dark/light theme toggle
+- Interactive cooking mode with unit converters (metric/imperial) and ingredient/step checklists
+- AI Chatbot assistant component
 
+## Development
 
-for dev
-
+```bash
 npm install
 npm run dev
+```
 
-for deployment
+## Production Build
 
+```bash
 npm run build
 npm run preview
+```

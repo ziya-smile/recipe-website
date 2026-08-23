@@ -1,14 +1,10 @@
 # Recipe Website
 
-A full-stack recipe site: a **FastAPI** backend (JSON API + server-rendered admin
-panel) and a **Vue 3 + Vite** single-page frontend, deployed as one Vercel project.
+A modern, full-stack recipe management web application featuring a **FastAPI** backend (JSON API and server-rendered admin panel with authentication) and a **Vue 3 + Vite** single-page application frontend, deployed together on Vercel.
 
-- Browse and search recipes, open a recipe detail page, save favourites (stored inside
-  `localStorage`).
-- Add and delete recipes — including image upload — from the admin panel at `/api/admin`.
-- Recipes live in SQL (PostgreSQL when `DATABASE_URL` is set, otherwise local SQLite);
-  images go to Supabase Storage when configured, otherwise into the database and are
-  served from `/api/media/{file}`.
+- Browse and search recipes, view detailed instructions with unit conversions, and save your personal favorite recipes (synchronized via Supabase Auth & stored locally/remotely).
+- Manage recipes securely from the admin panel (`/api/admin`), complete with image uploads (Supabase Storage / local database) and multiple rotating example recipe templates.
+- Backend data persistence uses SQL (PostgreSQL when `DATABASE_URL` is set, otherwise local SQLite).
 
 ## Table of Contents
 - [Tech Stack](#tech-stack)
@@ -23,125 +19,81 @@ panel) and a **Vue 3 + Vite** single-page frontend, deployed as one Vercel proje
 
 ## Tech Stack
 
-**Backend** — FastAPI, Uvicorn, SQLAlchemy 2, Pydantic, Jinja2 (admin templates),
-Mangum (Vercel ASGI adapter), psycopg2 (PostgreSQL).
+**Backend** — FastAPI, Uvicorn, SQLAlchemy 2, Pydantic, Jinja2 (admin templates), Mangum (Vercel ASGI adapter), psycopg2.
 
-**Frontend** — Vue 3 (`<script setup>` SFCs), Vue Router, Vite, plain `fetch` (`frontend/src/api.js`).
+**Frontend** — Vue 3 (`<script setup>` Composition API), Vue Router, Vite, Supabase JS client for authentication, plain `fetch` (`frontend/src/api.js`).
 
 ## Project Structure
 
 ```
-backend/    FastAPI app: main.py (API), admin.py (admin panel), store.py (SQLAlchemy storage),
+backend/    FastAPI application: main.py (API), admin.py (admin panel), store.py (SQLAlchemy storage),
             models.py (Pydantic models), templates/, tests/, Dockerfile
-frontend/   Vue 3 + Vite SPA: views/ (Home, Recipes, Recipe), components/, composables/
-api/        Vercel serverless entrypoint that re-exports the FastAPI app
-vercel.json Build + routing config for the single Vercel deployment
+frontend/   Vue 3 + Vite SPA: views/ (Home, Recipes, Recipe, Auth), components/, composables/
+api/        Vercel serverless entrypoint re-exporting the FastAPI app
+vercel.json Build and routing configuration for Vercel deployment
 ```
 
 ## Quick Start
 
-Requires **Node >= 22.12** (see `.nvmrc`; Vite 8 fails on older Node) and **Python >= 3.11**
-(the test suite imports `tomllib`).
+Requires **Node >= 22.12** (see `.nvmrc`) and **Python >= 3.11**.
 
-Backend — API on http://localhost:8000:
-
+### 1. Backend (API on http://localhost:8000)
 ```bash
-python -m venv .venv && . .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cd backend && SITE_BASE_URL=http://localhost:5173 python -m uvicorn main:app --reload --port 8000
+cd backend
+SITE_BASE_URL=http://localhost:5173 python -m uvicorn main:app --reload --port 8000
 ```
 
-Frontend — SPA on http://localhost:5173:
-
+### 2. Frontend (SPA on http://localhost:5173)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-`frontend/vite.config.js` proxies `/api`, `/api/media`, and `/api/static` to
-`http://localhost:8000`, so the SPA only makes same-origin requests and no CORS setup is
-needed. `SITE_BASE_URL` points the admin panel's "view site" links at the Vite dev server.
-
-There are no seed recipes: a fresh database starts empty and shows the "No recipes yet"
-state until you add recipes through the admin panel.
+`frontend/vite.config.js` proxies `/api`, `/api/media`, and `/api/static` to `http://localhost:8000`.
 
 ## Environment Variables
 
 | Variable | Where | Default | Purpose |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | backend / Vercel | `""` (local SQLite) | PostgreSQL connection string (required for durable data on Vercel). `POSTGRES_URL` / `POSTGRES_PRISMA_URL` also work |
-| `SUPABASE_URL` | backend / Vercel | `""` | Supabase project URL for persistent image uploads |
-| `SUPABASE_SECRET_KEY` | backend / Vercel | `""` (database-backed uploads) | Server-only Supabase secret key for Storage uploads |
-| `SUPABASE_SERVICE_ROLE_KEY` | backend / Vercel | `""` | Legacy alternative to `SUPABASE_SECRET_KEY` |
+| `DATABASE_URL` | backend / Vercel | `""` (local SQLite) | PostgreSQL connection string (`POSTGRES_URL` also supported) |
+| `SUPABASE_URL` | backend / Vercel / frontend | `""` | Supabase project URL for Auth & Storage uploads |
+| `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | backend / Vercel | `""` | Server-only Supabase secret key for Storage uploads |
 | `SUPABASE_STORAGE_BUCKET` | backend / Vercel | `recipe-images` | Public Supabase Storage bucket for recipe images |
-| `CLOUDINARY_URL` | backend / Vercel | `""` | Optional legacy Cloudinary upload fallback |
-| `VITE_API_BASE_URL` | frontend build | `""` (same origin) | Point the frontend at a backend on a different origin |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | backend | `admin` / `admin` | Basic auth for `/api/admin` |
-| `SITE_BASE_URL` | backend | `""` (same origin) | Base URL the admin panel links to (e.g. `http://localhost:5173` in dev) |
-| `RECIPE_DATA_DIR` | backend | `backend/data` | Where the local SQLite database and legacy uploads live (forced to `/tmp/recipe_data` on Vercel) |
-
-Never expose Supabase secret or service-role keys to the frontend (no `VITE_` prefix).
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | backend | `admin` / `admin` | Basic auth credentials for `/api/admin` |
+| `SITE_BASE_URL` | backend | `""` | Base URL for admin panel links |
+| `RECIPE_DATA_DIR` | backend | `backend/data` | Local SQLite data directory |
 
 ## API Endpoints
 
 | Method | Path | Description |
 | --- | --- | --- |
-| GET | `/` | Health/hello payload |
-| GET | `/api/recipes` | List recipes (`?q=` searches title, description, ingredients) |
-| GET | `/api/recipes/{id}` | Single recipe (404 if missing) |
-| POST | `/api/recipes` | Create a recipe (JSON body: `title`, `description`, `image`, `ingredients[]`, `steps[]`) |
-| DELETE | `/api/recipes/{id}` | Delete a recipe |
-| GET | `/api/admin` | Admin panel (HTTP basic auth) |
-| GET | `/api/media/{file}` | Uploaded images stored in the database (falls back to legacy files on disk) |
-
-Interactive docs are available at `/docs` while the backend runs.
+| GET | `/` | Health check payload |
+| GET | `/api/recipes` | List recipes (`?q=` searches title, description, and ingredients) |
+| GET | `/api/recipes/{id}` | Retrieve a single recipe by ID |
+| POST | `/api/recipes` | Create a new recipe |
+| DELETE | `/api/recipes/{id}` | Delete a recipe by ID |
+| GET | `/api/admin` | Server-rendered admin panel (HTTP Basic Auth) |
+| GET | `/api/media/{file}` | Serve uploaded media files |
 
 ## Admin Panel
 
-Open http://localhost:8000/api/admin and sign in with `ADMIN_USERNAME` / `ADMIN_PASSWORD`
-(`admin` / `admin` by default). From there you can create a recipe with an uploaded image
-and delete existing ones. The panel header shows the active storage backend
-("PostgreSQL (Cloud)" vs "SQLite (Local)"), which is the quickest way to confirm database
-wiring.
+Access http://localhost:8000/api/admin with your admin credentials. The panel allows you to create, edit, and delete recipes, upload images, or instantly load rotating example recipe templates.
 
 ## Testing
 
+Run backend tests with pytest:
 ```bash
 cd backend && ../.venv/bin/python -m pytest
 ```
 
-`backend/tests/test_main.py` covers the API and admin flows; `test_deployment.py` checks the
-Vercel/deployment configuration. CI (`.github/workflows/ci.yml`) runs the backend tests, a
-Docker image smoke test, and a frontend build on every push and pull request.
-
 ## Docker
 
-The backend ships a Dockerfile:
-
+Build and run the backend container:
 ```bash
 docker build -t recipe-backend backend
 docker run -d -p 8000:8000 --name recipe-backend recipe-backend
-curl --fail http://localhost:8000/api/recipes
 ```
-
-## Deploying to Vercel
-
-`vercel.json` builds the frontend into `frontend/dist` and routes traffic:
-
-- `/api/*` → the FastAPI app in `api/index.py` (Python serverless function)
-- everything else → `index.html`, so client-side routes such as `/recipes/1` work
-
-Set these in **Vercel Dashboard → Project Settings → Environment Variables**:
-
-1. `DATABASE_URL` — PostgreSQL connection string from [Neon](https://neon.tech),
-   [Supabase](https://supabase.com), or a Vercel Marketplace integration, e.g.
-   `postgresql://user:password@ep-xyz.aws.neon.tech/neondb?sslmode=require`. Without it the
-   function falls back to SQLite under `/tmp` and recipes disappear when it is recycled.
-2. `ADMIN_USERNAME` / `ADMIN_PASSWORD` — credentials for `/api/admin`.
-3. For persistent image uploads, create a **public** Supabase Storage bucket named
-   `recipe-images` and set `SUPABASE_URL` (Project Settings → Data API) and
-   `SUPABASE_SECRET_KEY` (Project Settings → API Keys). Older projects can use
-   `SUPABASE_SERVICE_ROLE_KEY`; set `SUPABASE_STORAGE_BUCKET` only if the bucket has a
-   different name. Without Supabase, uploads are stored as rows in the database, which is
-   durable as long as `DATABASE_URL` points at PostgreSQL.
