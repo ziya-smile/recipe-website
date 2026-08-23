@@ -4,9 +4,8 @@ import ChatBot from './components/ChatBot.vue'
 
 const isDark = ref(false)
 
-function toggleTheme() {
-  isDark.value = !isDark.value
-  const theme = isDark.value ? 'dark' : 'light'
+function setTheme(theme) {
+  isDark.value = theme === 'dark'
   document.documentElement.classList.remove('light', 'dark')
   document.documentElement.classList.add(theme)
   localStorage.setItem('theme', theme)
@@ -32,10 +31,14 @@ onMounted(() => {
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/recipes">Recipes</RouterLink>
       </nav>
-      <button class="theme-toggle-btn" @click="toggleTheme" :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'">
-        <span v-if="isDark">☀️</span>
-        <span v-else>🌙</span>
-      </button>
+      <div class="theme-toggle">
+        <button class="theme-option" :class="{ active: !isDark }" @click="setTheme('light')">
+          <span>☀️</span> Light
+        </button>
+        <button class="theme-option" :class="{ active: isDark }" @click="setTheme('dark')">
+          <span>🌙</span> Dark
+        </button>
+      </div>
     </header>
     <RouterView />
     <ChatBot />

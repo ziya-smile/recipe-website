@@ -117,24 +117,41 @@ a:hover {
   margin-right: auto;
 }
 
-.theme-toggle-btn {
+.theme-toggle {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
   background: var(--muted-bg);
   border: 1px solid var(--border);
-  color: var(--text-h);
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0;
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 2px;
 }
 
-.theme-toggle-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+.theme-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-option:hover {
+  color: var(--text-h);
+}
+
+.theme-option.active {
+  background: var(--bg);
+  color: var(--text-h);
+  border-color: var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .site-header nav a {
