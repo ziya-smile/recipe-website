@@ -622,24 +622,91 @@
   </main>
 
   <script>
+    const examples = [
+      {
+        title: 'Lemon Garlic Salmon',
+        description: 'Pan-seared salmon fillets with a buttery lemon and fresh herb reduction.',
+        ingredients: [
+          '2 | fillets | salmon',
+          '30 | g | unsalted butter',
+          '2 | cloves | garlic, minced',
+          '1 | whole | lemon',
+          '15 | ml | olive oil'
+        ],
+        steps: [
+          'Season the salmon fillets generously with salt and black pepper.',
+          'Heat olive oil in a skillet over medium-high heat until hot.',
+          'Place salmon skin-side down and cook for 4-5 minutes until crispy, then flip.',
+          'Add butter, minced garlic, and lemon juice to the pan, spooning the melted sauce over the salmon for 2-3 minutes.',
+          'Garnish with lemon slices and chopped dill before serving warm.'
+        ]
+      },
+      {
+        title: 'Classic Creamy Carbonara',
+        description: 'Authentic Roman pasta made with crispy pancetta, eggs, pecorino cheese, and black pepper.',
+        ingredients: [
+          '400 | g | spaghetti',
+          '150 | g | pancetta or guanciale, diced',
+          '4 | large | egg yolks',
+          '100 | g | pecorino romano cheese, grated',
+          '2 | tsp | freshly cracked black pepper'
+        ],
+        steps: [
+          'Bring a large pot of salted water to a boil and cook the spaghetti until al dente.',
+          'In a skillet, cook the diced pancetta over medium heat until crispy and golden.',
+          'In a bowl, whisk together the egg yolks and grated pecorino romano cheese.',
+          'Drain the pasta, reserving a cup of pasta water, and remove from heat.',
+          'Quickly mix the egg and cheese mixture into the hot pasta along with the crispy pancetta, adding pasta water to create a glossy sauce.'
+        ]
+      },
+      {
+        title: 'Berry Berry Smoothie Bowl',
+        description: 'A refreshing blended fruit bowl topped with fresh berries, chia seeds, and granola.',
+        ingredients: [
+          '200 | g | frozen mixed berries',
+          '1 | whole | frozen banana',
+          '120 | ml | almond milk',
+          '30 | g | granola',
+          '1 | tbsp | chia seeds'
+        ],
+        steps: [
+          'Blend frozen berries, frozen banana, and almond milk in a blender until smooth and thick.',
+          'Pour the smoothie mixture into a serving bowl.',
+          'Arrange fresh berries and granola neatly on top.',
+          'Sprinkle chia seeds over the bowl and serve immediately with a spoon.'
+        ]
+      },
+      {
+        title: 'Crispy Chicken Fajitas',
+        description: 'Sizzling spiced chicken strips with bell peppers and onions wrapped in warm tortillas.',
+        ingredients: [
+          '500 | g | chicken breast, sliced into strips',
+          '2 | whole | bell peppers, sliced',
+          '1 | whole | red onion, sliced',
+          '2 | tbsp | fajita seasoning',
+          '4 | pcs | flour tortillas'
+        ],
+        steps: [
+          'Toss chicken strips in fajita seasoning until evenly coated.',
+          'Heat oil in a large skillet over high heat and cook chicken strips until browned and cooked through.',
+          'Remove chicken and stir-fry the sliced bell peppers and onions until tender-crisp.',
+          'Return chicken to the skillet, toss together, and serve hot with warm flour tortillas.'
+        ]
+      }
+    ];
+
+    let exampleIndex = 0;
+
     function loadExample() {
-      document.getElementById('title').value = 'Lemon Garlic Salmon';
-      document.getElementById('description').value = 'Pan-seared salmon fillets with a buttery lemon and fresh herb reduction.';
+      const ex = examples[exampleIndex];
+      document.getElementById('title').value = ex.title;
+      document.getElementById('description').value = ex.description;
       document.getElementById('image_url').value = '';
-      document.getElementById('ingredients').value = [
-        '2 | fillets | salmon',
-        '30 | g | unsalted butter',
-        '2 | cloves | garlic, minced',
-        '1 | whole | lemon',
-        '15 | ml | olive oil'
-      ].join('\n');
-      document.getElementById('steps').value = [
-        'Season the salmon fillets generously with salt and black pepper.',
-        'Heat olive oil in a skillet over medium-high heat until hot.',
-        'Place salmon skin-side down and cook for 4-5 minutes until crispy, then flip.',
-        'Add butter, minced garlic, and lemon juice to the pan, spooning the melted sauce over the salmon for 2-3 minutes.',
-        'Garnish with lemon slices and chopped dill before serving warm.'
-      ].join('\n');
+      document.getElementById('ingredients').value = ex.ingredients.join('\n');
+      document.getElementById('steps').value = ex.steps.join('\n');
+
+      // Cycle to the next example
+      exampleIndex = (exampleIndex + 1) % examples.length;
     }
   </script>
 </body>
