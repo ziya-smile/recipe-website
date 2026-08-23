@@ -36,6 +36,9 @@ class RecipeRecord(Base):
     image = Column(Text, nullable=True)
     ingredients = Column(JSON, nullable=False, default=list)
     steps = Column(JSON, nullable=False, default=list)
+    category = Column(String(100), nullable=False, default="")
+    cook_time = Column(Integer, nullable=True)
+    difficulty = Column(String(20), nullable=False, default="")
 
     def to_pydantic(self) -> Recipe:
         return Recipe(
@@ -45,6 +48,9 @@ class RecipeRecord(Base):
             image=self.image,
             ingredients=list(self.ingredients or []),
             steps=list(self.steps or []),
+            category=self.category or "",
+            cook_time=self.cook_time,
+            difficulty=self.difficulty or "",
         )
 
 
@@ -188,6 +194,9 @@ def create_recipe(payload: RecipeCreate) -> Recipe:
                 image=payload.image,
                 ingredients=payload.ingredients,
                 steps=payload.steps,
+                category=payload.category,
+                cook_time=payload.cook_time,
+                difficulty=payload.difficulty,
             )
             session.add(record)
             session.commit()

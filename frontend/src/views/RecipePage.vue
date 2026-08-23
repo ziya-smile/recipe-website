@@ -115,6 +115,11 @@ watch(
         </div>
       </div>
       <h1 class="recipe-title">{{ recipe.title }}</h1>
+      <div v-if="recipe.category || recipe.cook_time || recipe.difficulty" class="detail-meta">
+        <span v-if="recipe.category" class="card-badge">📂 {{ recipe.category }}</span>
+        <span v-if="recipe.cook_time" class="card-badge">⏱️ {{ recipe.cook_time }} min</span>
+        <span v-if="recipe.difficulty" class="card-badge">{{ recipe.difficulty === 'easy' ? '🟢' : recipe.difficulty === 'medium' ? '🟡' : '🔴' }} {{ recipe.difficulty.charAt(0).toUpperCase() + recipe.difficulty.slice(1) }}</span>
+      </div>
       <p class="recipe-description">{{ recipe.description }}</p>
 
       <div class="recipe-block">

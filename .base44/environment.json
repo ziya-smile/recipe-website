@@ -2,5 +2,11 @@
   "previewPort": 3000,
   "healthPath": "/",
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
-  "secrets": []
+  "secrets": [
+    {
+      "name": "GEMINI_API_KEY",
+      "description": "Google Gemini API key for the AI chatbot. Get it from Google AI Studio at https://aistudio.google.com/apikey.",
+      "requiredAtBoot": false
+    }
+  ]
 }

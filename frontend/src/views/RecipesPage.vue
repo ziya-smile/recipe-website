@@ -8,6 +8,9 @@ const recipes = ref([])
 const searchQuery = ref('')
 const activeTab = ref('all')
 const status = ref('Loading recipes...')
+const filterCategory = ref('')
+const filterDifficulty = ref('')
+const filterCookTime = ref('')
 
 const { isFavorite } = useFavorites()
 
@@ -15,25 +18,52 @@ const savedCount = computed(
   () => recipes.value.filter((recipe) => isFavorite(recipe.id)).length
 )
 
+const categories = computed(() => {
+  const set = new Set()
+  recipes.value.forEach((r) => { if (r.category) set.add(r.category) })
+  return [...set].sort()
+})
+
 const filteredRecipes = computed(() => {
   let list = recipes.value
   if (activeTab.value === 'favorites') {
     list = list.filter((r) => isFavorite(r.id))
   }
+  if (filterCategory.value) {
+    list = list.filter((r) => r.category === filterCategory.value)
+  }
+  if (filterDifficulty.value) {
+    list = list.filter((r) => r.difficulty === filterDifficulty.value)
+  }
+  if (filterCookTime.value) {
+    list = list.filter((r) => r.cook_time != null && r.cook_time <= Number(filterCookTime.value))
+  }
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return list
-  return list.filter((recipe) => {
-    const titleMatch = recipe.title?.toLowerCase().includes(q)
-    const descMatch = recipe.description?.toLowerCase().includes(q)
-    const ingMatch = recipe.ingredients?.some((ing) =>
-      ing.toLowerCase().includes(q)
-    )
-    return titleMatch || descMatch || ingMatch
-  })
+  if (q) {
+    list = list.filter((recipe) => {
+      const titleMatch = recipe.title?.toLowerCase().includes(q)
+      const descMatch = recipe.description?.toLowerCase().includes(q)
+      const ingMatch = recipe.ingredients?.some((ing) =>
+        ing.toLowerCase().includes(q)
+      )
+      return titleMatch || descMatch || ingMatch
+    })
+  }
+  return list
 })
+
+const hasFilters = computed(
+  () => filterCategory.value || filterDifficulty.value || filterCookTime.value
+)
 
 function clearSearch() {
   searchQuery.value = ''
+}
+
+function clearFilters() {
+  filterCategory.value = ''
+  filterDifficulty.value = ''
+  filterCookTime.value = ''
 }
 
 onMounted(async () => {
@@ -73,6 +103,28 @@ onMounted(async () => {
           @click="activeTab = 'favorites'"
         >
           ❤️ Saved ({{ savedCount }})
+        </button>
+      </div>
+
+      <div class="filter-row">
+        <select v-model="filterCategory" class="filter-select" aria-label="Filter by category">
+          <option value="">📂 All categories</option>
+          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        </select>
+        <select v-model="filterDifficulty" class="filter-select" aria-label="Filter by difficulty">
+          <option value="">📊 Any difficulty</option>
+          <option value="easy">🟢 Easy</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="hard">🔴 Hard</option>
+        </select>
+        <select v-model="filterCookTime" class="filter-select" aria-label="Filter by cook time">
+          <option value="">⏱️ Any time</option>
+          <option value="15">Under 15 min</option>
+          <option value="30">Under 30 min</option>
+          <option value="60">Under 1 hour</option>
+        </select>
+        <button v-if="hasFilters" type="button" class="reset-btn" @click="clearFilters">
+          Clear filters
         </button>
       </div>
 
@@ -137,14 +189,14 @@ onMounted(async () => {
       <p class="empty-text">Recipes added from the admin panel show up here.</p>
     </div>
 
-    <!-- Empty state for search query with zero matches -->
+    <!-- Empty state for search/filter with zero matches -->
     <div v-else-if="filteredRecipes.length === 0" class="empty-state">
       <p class="empty-title">No recipes found</p>
       <p class="empty-text">
-        We couldn't find any recipes matching "<strong>{{ searchQuery }}</strong>"{{ activeTab === 'favorites' ? ' in your saved collection' : '' }}.
+        We couldn't find any recipes matching your filters{{ searchQuery ? ' and "' + searchQuery + '"' : '' }}.
       </p>
-      <button type="button" class="button" @click="clearSearch">
-        Clear search
+      <button v-if="searchQuery || hasFilters" type="button" class="button" @click="clearSearch(); clearFilters()">
+        Clear all
       </button>
     </div>
 

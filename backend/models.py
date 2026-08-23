@@ -8,6 +8,9 @@ class Recipe(BaseModel):
     image: str | None = None
     ingredients: list[str] = Field(default_factory=list)
     steps: list[str] = Field(default_factory=list)
+    category: str = ""
+    cook_time: int | None = None
+    difficulty: str = ""
 
 
 class RecipeCreate(BaseModel):
@@ -16,3 +19,6 @@ class RecipeCreate(BaseModel):
     image: str | None = None
     ingredients: list[str] = Field(default_factory=list)
     steps: list[str] = Field(default_factory=list)
+    category: str = ""
+    cook_time: int | None = None
+    difficulty: str = ""

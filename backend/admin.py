@@ -212,6 +212,9 @@ async def admin_create_recipe(
             image=saved_image,
             ingredients=_lines(ingredients),
             steps=_lines(steps),
+            category=category.strip(),
+            cook_time=cook_time,
+            difficulty=difficulty.strip(),
         )
     )
     return RedirectResponse(url=f"/api/admin?created=1&id={recipe.id}", status_code=303)
