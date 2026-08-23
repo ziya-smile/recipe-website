@@ -215,6 +215,27 @@ def create_recipe(payload: RecipeCreate) -> Recipe:
             return record.to_pydantic()
 
 
+def update_recipe(recipe_id: int, payload: RecipeCreate) -> Recipe | None:
+    with _lock:
+        session_factory = _get_session_factory()
+        with session_factory() as session:
+            record = session.query(RecipeRecord).filter(RecipeRecord.id == recipe_id).first()
+            if not record:
+                return None
+            record.title = payload.title
+            record.description = payload.description
+            if payload.image is not None:
+                record.image = payload.image
+            record.ingredients = [
+                i.dict() if hasattr(i, "dict") else i
+                for i in payload.ingredients
+            ]
+            record.steps = payload.steps
+            session.commit()
+            session.refresh(record)
+            return record.to_pydantic()
+
+
 def save_image(filename: str, content_type: str, data: bytes) -> None:
     with _lock:
         session_factory = _get_session_factory()

@@ -5,13 +5,13 @@ from urllib.parse import quote
 from urllib.request import Request as UrlRequest, urlopen
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from auth import require_admin
 from models import RecipeCreate, Ingredient
-from store import create_recipe, delete_recipe, get_db_type, list_recipes, save_image
+from store import create_recipe, update_recipe, delete_recipe, get_recipe, get_db_type, list_recipes, save_image
 
 try:
     import cloudinary
@@ -153,7 +153,7 @@ def _upload_to_supabase(image: UploadFile, suffix: str) -> str | None:
     )
 
 
-def _save_image(image: UploadFile | None, image_url: str = "") -> str | None:
+def _save_image(image: UploadFile | None, image_url: str = "", existing_image: str | None = None) -> str | None:
     if image is not None and image.filename:
         suffix = _image_suffix(image)
         if suffix is None:
@@ -182,13 +182,16 @@ def _save_image(image: UploadFile | None, image_url: str = "") -> str | None:
         )
         return f"/api/media/{filename}"
     clean_url = image_url.strip()
-    return clean_url if clean_url else None
+    if clean_url:
+        return clean_url
+    return existing_image
 
 
 @router.get("", response_class=HTMLResponse)
 def admin_home(
     request: Request,
     created: int | None = None,
+    updated: int | None = None,
     deleted: int | None = None,
     error: str | None = None,
 ):
@@ -198,13 +201,38 @@ def admin_home(
         {
             "recipes": list_recipes(),
             "created": created == 1,
+            "updated": updated == 1,
             "deleted": deleted == 1,
             "error": error,
             "site_base": _site_base(),
             "db_type": get_db_type(),
+            "edit_recipe": None,
         },
     )
 
+
+@router.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
+def admin_edit_recipe_form(
+    request: Request,
+    recipe_id: int,
+):
+    recipe = get_recipe(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return templates.TemplateResponse(
+        request,
+        "admin.html",
+        {
+            "recipes": list_recipes(),
+            "created": False,
+            "updated": False,
+            "deleted": False,
+            "error": None,
+            "site_base": _site_base(),
+            "db_type": get_db_type(),
+            "edit_recipe": recipe,
+        },
+    )
 
 
 @router.post("/recipes")
@@ -225,9 +253,11 @@ async def admin_create_recipe(
             {
                 "recipes": list_recipes(),
                 "created": False,
+                "updated": False,
                 "deleted": False,
                 "error": "Recipe title is required.",
                 "site_base": _site_base(),
+                "edit_recipe": None,
             },
             status_code=400,
         )
@@ -241,10 +271,12 @@ async def admin_create_recipe(
             {
                 "recipes": list_recipes(),
                 "created": False,
+                "updated": False,
                 "deleted": False,
                 "error": str(exc),
                 "site_base": _site_base(),
                 "db_type": get_db_type(),
+                "edit_recipe": None,
             },
             status_code=502,
         )
@@ -259,6 +291,71 @@ async def admin_create_recipe(
         )
     )
     return RedirectResponse(url=f"/api/admin?created=1&id={recipe.id}", status_code=303)
+
+
+@router.post("/recipes/{recipe_id}")
+async def admin_update_recipe(
+    request: Request,
+    recipe_id: int,
+    title: str = Form(),
+    description: str = Form(""),
+    ingredients: str = Form(""),
+    steps: str = Form(""),
+    image_url: str = Form(""),
+    image: UploadFile | None = File(None),
+):
+    existing = get_recipe(recipe_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    title = title.strip()
+    if not title:
+        return templates.TemplateResponse(
+            request,
+            "admin.html",
+            {
+                "recipes": list_recipes(),
+                "created": False,
+                "updated": False,
+                "deleted": False,
+                "error": "Recipe title is required.",
+                "site_base": _site_base(),
+                "db_type": get_db_type(),
+                "edit_recipe": existing,
+            },
+            status_code=400,
+        )
+
+    try:
+        saved_image = _save_image(image, image_url, existing_image=existing.image)
+    except ImageUploadError as exc:
+        return templates.TemplateResponse(
+            request,
+            "admin.html",
+            {
+                "recipes": list_recipes(),
+                "created": False,
+                "updated": False,
+                "deleted": False,
+                "error": str(exc),
+                "site_base": _site_base(),
+                "db_type": get_db_type(),
+                "edit_recipe": existing,
+            },
+            status_code=502,
+        )
+
+    update_recipe(
+        recipe_id,
+        RecipeCreate(
+            title=title,
+            description=description.strip(),
+            image=saved_image,
+            ingredients=_parse_ingredients(ingredients),
+            steps=_lines(steps),
+        )
+    )
+    return RedirectResponse(url=f"/api/admin?updated=1&id={recipe_id}", status_code=303)
 
 
 @router.post("/recipes/{recipe_id}/delete")
