@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from auth import require_admin
-from models import RecipeCreate
+from models import RecipeCreate, Ingredient
 from store import create_recipe, delete_recipe, get_db_type, list_recipes, save_image
 
 try:
@@ -43,6 +43,50 @@ def _site_base() -> str:
 
 def _lines(value: str) -> list[str]:
     return [line.strip() for line in value.splitlines() if line.strip()]
+
+
+def _parse_ingredients(value: str) -> list[Ingredient]:
+    results = []
+    for line in _lines(value):
+        parts = line.split("|")
+        if len(parts) >= 3:
+            results.append(
+                Ingredient(
+                    amount=parts[0].strip(),
+                    unit=parts[1].strip(),
+                    name=parts[2].strip(),
+                )
+            )
+        elif len(parts) == 2:
+            results.append(
+                Ingredient(
+                    amount=parts[0].strip(),
+                    unit=None,
+                    name=parts[1].strip(),
+                )
+            )
+        else:
+            # Try splitting by space for amount/unit/name if no pipe is used
+            tokens = line.split(maxsplit=2)
+            if len(tokens) == 3:
+                results.append(
+                    Ingredient(
+                        amount=tokens[0],
+                        unit=tokens[1],
+                        name=tokens[2],
+                    )
+                )
+            elif len(tokens) == 2:
+                results.append(
+                    Ingredient(
+                        amount=tokens[0],
+                        unit=None,
+                        name=tokens[1],
+                    )
+                )
+            else:
+                results.append(Ingredient(name=line))
+    return results
 
 
 def _image_suffix(image: UploadFile) -> str | None:
@@ -210,7 +254,7 @@ async def admin_create_recipe(
             title=title,
             description=description.strip(),
             image=saved_image,
-            ingredients=_lines(ingredients),
+            ingredients=_parse_ingredients(ingredients),
             steps=_lines(steps),
         )
     )

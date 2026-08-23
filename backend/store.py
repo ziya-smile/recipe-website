@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
-from models import Recipe, RecipeCreate
+from models import Recipe, RecipeCreate, Ingredient
 
 _lock = Lock()
 _engine = None
@@ -38,12 +38,25 @@ class RecipeRecord(Base):
     steps = Column(JSON, nullable=False, default=list)
 
     def to_pydantic(self) -> Recipe:
+        raw_ings = self.ingredients or []
+        parsed_ings = []
+        for item in raw_ings:
+            if isinstance(item, dict):
+                parsed_ings.append(
+                    Ingredient(
+                        amount=item.get("amount"),
+                        unit=item.get("unit"),
+                        name=item.get("name", str(item)),
+                    )
+                )
+            else:
+                parsed_ings.append(item)
         return Recipe(
             id=self.id,
             title=self.title,
             description=self.description or "",
             image=self.image,
-            ingredients=list(self.ingredients or []),
+            ingredients=parsed_ings,
             steps=list(self.steps or []),
         )
 
@@ -128,7 +141,10 @@ def _maybe_seed(session_factory):
                         title=recipe.title,
                         description=recipe.description,
                         image=recipe.image,
-                        ingredients=recipe.ingredients,
+                        ingredients=[
+                            i.dict() if hasattr(i, "dict") else i
+                            for i in recipe.ingredients
+                        ],
                         steps=recipe.steps,
                     )
                     session.add(record)
@@ -182,11 +198,15 @@ def create_recipe(payload: RecipeCreate) -> Recipe:
     with _lock:
         session_factory = _get_session_factory()
         with session_factory() as session:
+            ings = [
+                i.dict() if hasattr(i, "dict") else i
+                for i in payload.ingredients
+            ]
             record = RecipeRecord(
                 title=payload.title,
                 description=payload.description,
                 image=payload.image,
-                ingredients=payload.ingredients,
+                ingredients=ings,
                 steps=payload.steps,
             )
             session.add(record)
@@ -225,4 +245,3 @@ def delete_recipe(recipe_id: int) -> bool:
                 session.commit()
                 return True
             return False
-

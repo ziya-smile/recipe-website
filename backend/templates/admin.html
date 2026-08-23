@@ -499,13 +499,13 @@
           <div class="form-group">
             <label for="ingredients">
               Ingredients
-              <span class="label-hint">(One ingredient per line)</span>
+              <span class="label-hint">(Format: amount | unit | name per line, e.g. 200 | g | flour)</span>
             </label>
             <textarea
               id="ingredients"
               name="ingredients"
               rows="5"
-              placeholder="2 thick slices sourdough bread&#10;1 ripe avocado&#10;2 eggs&#10;1 tbsp olive oil&#10;Pinch of chili flakes"
+              placeholder="2 | slices | sourdough bread&#10;1 | whole | avocado&#10;2 | pcs | eggs&#10;1 | tbsp | olive oil"
             ></textarea>
           </div>
 
@@ -592,13 +592,11 @@
       document.getElementById('description').value = 'Pan-seared salmon fillets with a buttery lemon and fresh herb reduction.';
       document.getElementById('image_url').value = '';
       document.getElementById('ingredients').value = [
-        '2 salmon fillets (skin-on)',
-        '2 tbsp unsalted butter',
-        '2 garlic cloves, minced',
-        '1 fresh lemon (half juiced, half sliced)',
-        '1 tbsp olive oil',
-        'Fresh dill or parsley',
-        'Salt and freshly ground black pepper'
+        '2 | fillets | salmon',
+        '30 | g | unsalted butter',
+        '2 | cloves | garlic, minced',
+        '1 | whole | lemon',
+        '15 | ml | olive oil'
       ].join('\n');
       document.getElementById('steps').value = [
         'Season the salmon fillets generously with salt and black pepper.',
@@ -611,4 +609,3 @@
   </script>
 </body>
 </html>
-
