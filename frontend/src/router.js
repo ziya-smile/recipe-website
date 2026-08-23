@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from './views/HomePage.vue'
 import RecipesPage from './views/RecipesPage.vue'
 import RecipePage from './views/RecipePage.vue'
+import AuthPage from './views/AuthPage.vue'
 
 export default createRouter({
   history: createWebHistory(),
@@ -9,6 +10,7 @@ export default createRouter({
     { path: '/', name: 'home', component: HomePage },
     { path: '/recipes', name: 'recipes', component: RecipesPage },
     { path: '/recipes/:id', name: 'recipe', component: RecipePage },
+    { path: '/auth', name: 'auth', component: AuthPage },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior() {

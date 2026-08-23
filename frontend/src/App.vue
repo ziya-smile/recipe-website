@@ -3,6 +3,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import ChatBot from './components/ChatBot.vue'
 import { fetchRecipes } from './api'
+import { supabase } from './supabase'
 
 const router = useRouter()
 const isDark = ref(false)
@@ -10,6 +11,7 @@ const searchQuery = ref('')
 const suggestions = ref([])
 const showSuggestions = ref(false)
 const searchWrapperRef = ref(null)
+const user = ref(null)
 
 function setTheme(theme) {
   isDark.value = theme === 'dark'
@@ -18,7 +20,7 @@ function setTheme(theme) {
   localStorage.setItem('theme', theme)
 }
 
-onMounted(() => {
+onMounted(async () => {
   const saved = localStorage.getItem('theme')
   if (saved) {
     isDark.value = saved === 'dark'
@@ -29,11 +31,25 @@ onMounted(() => {
   }
 
   document.addEventListener('click', handleClickOutside)
+
+  // Get initial session
+  const { data: { session } } = await supabase.auth.getSession()
+  user.value = session?.user || null
+
+  // Listen for auth state changes
+  supabase.auth.onAuthStateChange((_event, session) => {
+    user.value = session?.user || null
+  })
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+async function handleSignOut() {
+  await supabase.auth.signOut()
+  router.push('/')
+}
 
 function handleClickOutside(e) {
   if (searchWrapperRef.value && !searchWrapperRef.value.contains(e.target)) {
@@ -107,6 +123,17 @@ function selectRecipe(recipe) {
             </div>
           </div>
         </div>
+
+        <div class="auth-nav">
+          <template v-if="user">
+            <span class="user-email" :title="user.email">{{ user.email }}</span>
+            <button class="auth-btn logout-btn" @click="handleSignOut">Sign Out</button>
+          </template>
+          <template v-else>
+            <RouterLink to="/auth" class="auth-btn login-btn">Sign In</RouterLink>
+          </template>
+        </div>
+
         <div class="theme-toggle">
           <button class="theme-option" :class="{ active: !isDark }" @click="setTheme('light')">
             <span>☀️</span> Light
