@@ -146,10 +146,15 @@ function selectRecipe(recipe) {
                   <span class="dropdown-email" :title="user.email">{{ user.email }}</span>
                 </div>
                 <div class="dropdown-divider"></div>
-                <div v-if="isLoggedIn" class="dropdown-item saved-favorites-item">
+                <RouterLink
+                  v-if="isLoggedIn"
+                  to="/favorites"
+                  class="dropdown-item saved-favorites-item"
+                  @click="showUserMenu = false"
+                >
                   <span>❤️ Saved Recipes</span>
                   <span class="favorites-count-badge">{{ favoritesCount }}</span>
-                </div>
+                </RouterLink>
                 <div class="dropdown-divider"></div>
                 <button class="dropdown-item logout-action-btn" @click="handleSignOut">
                   <span>🚪</span> Sign Out
@@ -268,10 +273,17 @@ function selectRecipe(recipe) {
   background: transparent;
   border: none;
   text-align: left;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .saved-favorites-item {
   background: rgba(255, 255, 255, 0.02);
+  transition: background 0.15s;
+}
+
+.saved-favorites-item:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .favorites-count-badge {
