@@ -2,7 +2,7 @@
 name = "recipe-website"
 version = "0.1.0"
 description = "Recipe website with FastAPI backend and Vue frontend"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.141.1",
     "jinja2>=3.1.6",
