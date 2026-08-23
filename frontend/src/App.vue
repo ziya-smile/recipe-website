@@ -11,7 +11,9 @@ const isDark = ref(false)
 const searchQuery = ref('')
 const suggestions = ref([])
 const showSuggestions = ref(false)
+const showUserMenu = ref(false)
 const searchWrapperRef = ref(null)
+const userMenuRef = ref(null)
 const user = ref(null)
 
 const { favoritesCount, isLoggedIn } = useFavorites()
@@ -50,6 +52,7 @@ onUnmounted(() => {
 })
 
 async function handleSignOut() {
+  showUserMenu.value = false
   await supabase.auth.signOut()
   router.push('/')
 }
@@ -57,6 +60,9 @@ async function handleSignOut() {
 function handleClickOutside(e) {
   if (searchWrapperRef.value && !searchWrapperRef.value.contains(e.target)) {
     showSuggestions.value = false
+  }
+  if (userMenuRef.value && !userMenuRef.value.contains(e.target)) {
+    showUserMenu.value = false
   }
 }
 
@@ -127,12 +133,29 @@ function selectRecipe(recipe) {
         </div>
 
         <div class="auth-nav">
-          <div v-if="isLoggedIn" class="saved-badge-btn">
-            ❤️ Saved ({{ favoritesCount }})
-          </div>
           <template v-if="user">
-            <span class="user-email" :title="user.email">{{ user.email }}</span>
-            <button class="auth-btn logout-btn" @click="handleSignOut">Sign Out</button>
+            <div class="user-menu-container" ref="userMenuRef">
+              <button class="auth-btn user-menu-toggle" @click="showUserMenu = !showUserMenu">
+                <span>👤</span>
+                <span class="user-email-truncate" :title="user.email">{{ user.email }}</span>
+                <span class="dropdown-caret">▼</span>
+              </button>
+              <div v-if="showUserMenu" class="user-dropdown-menu">
+                <div class="dropdown-user-info">
+                  <span class="dropdown-label">Signed in as</span>
+                  <span class="dropdown-email" :title="user.email">{{ user.email }}</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div v-if="isLoggedIn" class="dropdown-item saved-favorites-item">
+                  <span>❤️ Saved Recipes</span>
+                  <span class="favorites-count-badge">{{ favoritesCount }}</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item logout-action-btn" @click="handleSignOut">
+                  <span>🚪</span> Sign Out
+                </button>
+              </div>
+            </div>
           </template>
           <template v-else>
             <RouterLink to="/auth" class="auth-btn login-btn">Sign In</RouterLink>
@@ -153,3 +176,120 @@ function selectRecipe(recipe) {
     <ChatBot />
   </div>
 </template>
+
+<style scoped>
+.user-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.user-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  cursor: pointer;
+}
+
+.user-email-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-caret {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 240px;
+  background: var(--card-bg, #1a1d26);
+  border: 1px solid var(--card-border, #2a2e3d);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-user-info {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dropdown-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted, #94a3b8);
+  margin-bottom: 2px;
+}
+
+.dropdown-email {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #f8fafc);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--card-border, #2a2e3d);
+  margin: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text, #f8fafc);
+  background: transparent;
+  border: none;
+  text-align: left;
+}
+
+.saved-favorites-item {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.favorites-count-badge {
+  background: var(--primary, #aa3bff);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.logout-action-btn {
+  cursor: pointer;
+  color: #f87171;
+  transition: background 0.15s;
+}
+
+.logout-action-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+}
+</style>
