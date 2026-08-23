@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import ChatBot from './components/ChatBot.vue'
 import { fetchRecipes } from './api'
 import { supabase } from './supabase'
+import { useFavorites } from './composables/useFavorites'
 
 const router = useRouter()
 const isDark = ref(false)
@@ -12,6 +13,8 @@ const suggestions = ref([])
 const showSuggestions = ref(false)
 const searchWrapperRef = ref(null)
 const user = ref(null)
+
+const { favoritesCount, isLoggedIn } = useFavorites()
 
 function setTheme(theme) {
   isDark.value = theme === 'dark'
@@ -124,6 +127,9 @@ function selectRecipe(recipe) {
         </div>
 
         <div class="auth-nav">
+          <div v-if="isLoggedIn" class="saved-badge-btn">
+            ❤️ Saved ({{ favoritesCount }})
+          </div>
           <template v-if="user">
             <span class="user-email" :title="user.email">{{ user.email }}</span>
             <button class="auth-btn logout-btn" @click="handleSignOut">Sign Out</button>
