@@ -147,7 +147,7 @@ a:hover {
   font-family: inherit;
   font-size: 14px;
   outline: none;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
 .header-search-input::-webkit-search-cancel-button {
@@ -158,7 +158,6 @@ a:hover {
   border-color: var(--accent);
   background: var(--bg);
   box-shadow: 0 0 0 3px var(--accent-bg);
-  width: 260px;
 }
 
 .suggestions-dropdown {
