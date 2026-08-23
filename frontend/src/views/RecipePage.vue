@@ -45,6 +45,32 @@ function resetChecklist() {
   completedSteps.value.clear()
 }
 
+function parseNumericAmount(amount) {
+  if (amount === undefined || amount === null || amount === '') return NaN
+  const str = String(amount).trim()
+  if (str.includes('/')) {
+    const parts = str.split(/\s+/)
+    let total = 0
+    for (const part of parts) {
+      if (part.includes('/')) {
+        const sub = part.split('/')
+        const num = parseFloat(sub[0])
+        const den = parseFloat(sub[1])
+        if (!isNaN(num) && !isNaN(den) && den !== 0) {
+          total += num / den
+        }
+      } else {
+        const num = parseFloat(part)
+        if (!isNaN(num)) {
+          total += num
+        }
+      }
+    }
+    return isNaN(total) ? NaN : total
+  }
+  return parseFloat(str)
+}
+
 const convertedIngredients = computed(() => {
   if (!recipe.value?.ingredients) return []
   return recipe.value.ingredients.map((ing) => {
@@ -55,27 +81,58 @@ const convertedIngredients = computed(() => {
     let unit = (ing.unit || '').toLowerCase().trim()
     let name = ing.name
 
-    if (unitSystem.value === 'imperial') {
-      const numAmount = parseFloat(amount)
-      if (!isNaN(numAmount)) {
-        if (unit === 'g' || unit === 'grams') {
+    const numAmount = parseNumericAmount(amount)
+
+    if (!isNaN(numAmount)) {
+      if (unitSystem.value === 'imperial') {
+        if (['g', 'gram', 'grams'].includes(unit)) {
           amount = (numAmount * 0.035274).toFixed(1)
           unit = 'oz'
-        } else if (unit === 'kg' || unit === 'kilograms') {
+        } else if (['kg', 'kilogram', 'kilograms'].includes(unit)) {
           amount = (numAmount * 2.20462).toFixed(1)
           unit = 'lbs'
-        } else if (unit === 'ml' || unit === 'milliliters') {
-          amount = (numAmount * 0.033814).toFixed(1)
-          unit = 'fl oz'
-        } else if (unit === 'l' || unit === 'liters') {
+        } else if (['ml', 'milliliter', 'milliliters'].includes(unit)) {
+          if (numAmount >= 240) {
+            amount = (numAmount / 240).toFixed(2)
+            unit = 'cups'
+          } else {
+            amount = (numAmount * 0.033814).toFixed(1)
+            unit = 'fl oz'
+          }
+        } else if (['l', 'liter', 'liters'].includes(unit)) {
           amount = (numAmount * 2.11338).toFixed(1)
           unit = 'pints'
-        } else if (unit === '°c' || unit === 'celsius') {
+        } else if (['°c', 'celsius', 'c'].includes(unit)) {
           amount = Math.round((numAmount * 9/5) + 32)
           unit = '°F'
         }
+      } else {
+        // Imperial to Metric conversion
+        if (['oz', 'ounce', 'ounces'].includes(unit)) {
+          amount = (numAmount * 28.3495).toFixed(0)
+          unit = 'g'
+        } else if (['lb', 'lbs', 'pound', 'pounds'].includes(unit)) {
+          amount = (numAmount * 0.453592).toFixed(2)
+          unit = 'kg'
+        } else if (['cup', 'cups'].includes(unit)) {
+          amount = Math.round(numAmount * 240)
+          unit = 'ml'
+        } else if (['tbsp', 'tablespoon', 'tablespoons'].includes(unit)) {
+          amount = Math.round(numAmount * 15)
+          unit = 'ml'
+        } else if (['tsp', 'teaspoon', 'teaspoons'].includes(unit)) {
+          amount = Math.round(numAmount * 5)
+          unit = 'ml'
+        } else if (['fl oz', 'fluid ounce', 'fluid ounces'].includes(unit)) {
+          amount = Math.round(numAmount * 29.5735)
+          unit = 'ml'
+        } else if (['°f', 'fahrenheit', 'f'].includes(unit)) {
+          amount = Math.round((numAmount - 32) * 5/9)
+          unit = '°C'
+        }
       }
     }
+
     return {
       original: ing,
       amount,
