@@ -20,7 +20,7 @@
 :root.dark {
   --text: #9ca3af;
   --text-h: #f3f4f6;
-  --bg: #121019;
+  --bg: #221B29;
   --border: #2e2a3b;
   --accent: #c084fc;
   --accent-bg: rgba(192, 132, 252, 0.15);
@@ -33,7 +33,7 @@
   :root:not(.light) {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #121019;
+    --bg: #221B29;
     --border: #2e2a3b;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
