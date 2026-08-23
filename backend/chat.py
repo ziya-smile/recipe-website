@@ -56,7 +56,16 @@ async def chat(payload: Annotated[ChatRequest, Body()]) -> ChatResponse:
     recipes = store_list_recipes()
     recipe_lines = []
     for r in recipes:
-        ingredients_str = ", ".join(r.ingredients) if r.ingredients else "N/A"
+        ing_list = []
+        if r.ingredients:
+            for ing in r.ingredients:
+                if hasattr(ing, "name"):
+                    ing_list.append(ing.name)
+                elif isinstance(ing, dict) and "name" in ing:
+                    ing_list.append(ing["name"])
+                else:
+                    ing_list.append(str(ing))
+        ingredients_str = ", ".join(ing_list) if ing_list else "N/A"
         recipe_lines.append(
             f"- **{r.title}** (ID: {r.id}): {r.description}. Ingredients: {ingredients_str}."
         )
