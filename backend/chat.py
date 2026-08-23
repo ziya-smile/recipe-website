@@ -84,7 +84,7 @@ async def chat(payload: Annotated[ChatRequest, Body()]) -> ChatResponse:
 
     try:
         chat_session = client.chats.create(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash-lite",
             history=history,
             config={
                 "system_instruction": full_system,
