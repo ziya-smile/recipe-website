@@ -1,6 +1,6 @@
 # Recipe Website
 
-A small full-stack recipe site: a **FastAPI** backend (JSON API + server-rendered admin
+A full-stack recipe site: a **FastAPI** backend (JSON API + server-rendered admin
 panel) and a **Vue 3 + Vite** single-page frontend, deployed as one Vercel project.
 
 - Browse and search recipes, open a recipe detail page, save favourites (stored inside
