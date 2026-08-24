@@ -270,6 +270,7 @@ function selectRecipe(recipe) {
   right: 0;
   top: calc(100% + 10px);
   width: 270px;
+  max-width: calc(100vw - 32px);
   background: var(--card-bg, #1a1d26);
   border: 1px solid var(--card-border, #2a2e3d);
   border-radius: 14px;
@@ -277,6 +278,16 @@ function selectRecipe(recipe) {
   z-index: 100;
   overflow: hidden;
   animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 768px) {
+  .user-dropdown-menu {
+    right: auto;
+    left: 0;
+  }
+  .user-email-truncate {
+    max-width: 120px;
+  }
 }
 
 @keyframes dropdownFadeIn {

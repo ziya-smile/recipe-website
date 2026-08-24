@@ -52,6 +52,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      flex-wrap: wrap;
     }
 
     .header-brand {
@@ -60,6 +61,7 @@
       gap: 12px;
       text-decoration: none;
       color: var(--text);
+      flex-wrap: wrap;
     }
 
     .header-brand h1 {
@@ -71,6 +73,7 @@
       display: flex;
       align-items: center;
       gap: 14px;
+      flex-wrap: wrap;
     }
 
     .badge {
@@ -111,6 +114,15 @@
       padding: 28px 24px 64px;
     }
 
+    @media (max-width: 768px) {
+      .header {
+        padding: 12px 16px;
+      }
+      .container {
+        padding: 16px 12px 48px;
+      }
+    }
+
     .alert {
       padding: 14px 18px;
       border-radius: 10px;
@@ -120,6 +132,7 @@
       justify-content: space-between;
       gap: 12px;
       font-size: 15px;
+      flex-wrap: wrap;
     }
 
     .alert-success {
@@ -166,6 +179,12 @@
       padding: 24px;
     }
 
+    @media (max-width: 768px) {
+      .card {
+        padding: 16px;
+      }
+    }
+
     .card-header {
       margin-bottom: 20px;
       padding-bottom: 14px;
@@ -179,6 +198,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .card-header p {
@@ -329,6 +349,7 @@
       border: 1px solid var(--card-border);
       border-radius: 10px;
       transition: border-color 0.2s;
+      flex-wrap: wrap;
     }
 
     .recipe-row:hover {
@@ -357,7 +378,7 @@
 
     .recipe-info {
       flex: 1;
-      min-width: 0;
+      min-width: 180px;
     }
 
     .recipe-info-header {
@@ -365,13 +386,13 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 4px;
+      flex-wrap: wrap;
     }
 
     .recipe-info h3 {
       font-size: 16px;
       font-weight: 600;
       color: var(--text);
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -391,6 +412,7 @@
       gap: 8px;
       font-size: 12px;
       color: var(--text-muted);
+      flex-wrap: wrap;
     }
 
     .recipe-actions {
@@ -398,6 +420,19 @@
       align-items: center;
       gap: 8px;
       flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 600px) {
+      .recipe-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .recipe-actions {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 8px;
+      }
     }
   </style>
 </head>
