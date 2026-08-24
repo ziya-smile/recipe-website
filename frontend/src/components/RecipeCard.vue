@@ -21,6 +21,8 @@ const { isLoggedIn, isFavorite, toggleFavorite } = useFavorites()
           v-if="recipe.image && !imgError"
           :src="recipe.image"
           :alt="recipe.title"
+          loading="lazy"
+          decoding="async"
           @error="imgError = true"
         />
         <div v-else class="photo-placeholder">

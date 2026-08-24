@@ -230,6 +230,7 @@ watch(
           v-if="recipe.image && !imgError"
           :src="recipe.image"
           :alt="recipe.title"
+          decoding="async"
           @error="imgError = true"
         />
         <div v-else class="photo-placeholder">

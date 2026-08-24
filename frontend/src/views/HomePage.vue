@@ -19,7 +19,7 @@ onMounted(async () => {
 <template>
   <main>
     <section class="hero-banner">
-      <img src="/hero-kitchen.jpg" alt="" />
+      <img src="/hero-kitchen.jpg" alt="" decoding="async" />
       <div class="hero-copy">
         <p class="eyebrow">Weeknight cooking, kept simple</p>
         <h1>Recipes worth making twice</h1>

@@ -122,7 +122,7 @@ function selectRecipe(recipe) {
               class="suggestion-item"
               @click="selectRecipe(recipe)"
             >
-              <img v-if="recipe.image || recipe.image_url" :src="recipe.image || recipe.image_url" class="suggestion-thumb" alt="" />
+              <img v-if="recipe.image || recipe.image_url" :src="recipe.image || recipe.image_url" class="suggestion-thumb" alt="" loading="lazy" decoding="async" />
               <div v-else class="suggestion-thumb-placeholder">🍽️</div>
               <div class="suggestion-info">
                 <div class="suggestion-title">{{ recipe.title }}</div>
