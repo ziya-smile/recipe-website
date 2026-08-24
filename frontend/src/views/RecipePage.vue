@@ -12,6 +12,7 @@ const checkedIngredients = ref(new Set())
 const completedSteps = ref(new Set())
 const copyStatus = ref('')
 const unitSystem = ref('metric') // 'metric' or 'imperial'
+const servings = ref(4) // default serving size
 const { isLoggedIn, isFavorite, toggleFavorite } = useFavorites()
 
 function getIngredientKey(item) {
@@ -73,6 +74,8 @@ function parseNumericAmount(amount) {
 
 const convertedIngredients = computed(() => {
   if (!recipe.value?.ingredients) return []
+  const multiplier = servings.value / 4
+
   return recipe.value.ingredients.map((ing) => {
     if (typeof ing === 'string') {
       return { amount: '', unit: '', name: ing }
@@ -84,51 +87,58 @@ const convertedIngredients = computed(() => {
     const numAmount = parseNumericAmount(amount)
 
     if (!isNaN(numAmount)) {
+      // Scale by servings multiplier first
+      const scaledAmount = numAmount * multiplier
+
       if (unitSystem.value === 'imperial') {
         if (['g', 'gram', 'grams'].includes(unit)) {
-          amount = (numAmount * 0.035274).toFixed(1)
+          amount = (scaledAmount * 0.035274).toFixed(1)
           unit = 'oz'
         } else if (['kg', 'kilogram', 'kilograms'].includes(unit)) {
-          amount = (numAmount * 2.20462).toFixed(1)
+          amount = (scaledAmount * 2.20462).toFixed(1)
           unit = 'lbs'
         } else if (['ml', 'milliliter', 'milliliters'].includes(unit)) {
-          if (numAmount >= 240) {
-            amount = (numAmount / 240).toFixed(2)
+          if (scaledAmount >= 240) {
+            amount = (scaledAmount / 240).toFixed(2)
             unit = 'cups'
           } else {
-            amount = (numAmount * 0.033814).toFixed(1)
+            amount = (scaledAmount * 0.033814).toFixed(1)
             unit = 'fl oz'
           }
         } else if (['l', 'liter', 'liters'].includes(unit)) {
-          amount = (numAmount * 2.11338).toFixed(1)
+          amount = (scaledAmount * 2.11338).toFixed(1)
           unit = 'pints'
         } else if (['°c', 'celsius', 'c'].includes(unit)) {
-          amount = Math.round((numAmount * 9/5) + 32)
+          amount = Math.round((scaledAmount * 9/5) + 32)
           unit = '°F'
+        } else {
+          amount = scaledAmount % 1 !== 0 ? scaledAmount.toFixed(1) : scaledAmount
         }
       } else {
         // Imperial to Metric conversion
         if (['oz', 'ounce', 'ounces'].includes(unit)) {
-          amount = (numAmount * 28.3495).toFixed(0)
+          amount = (scaledAmount * 28.3495).toFixed(0)
           unit = 'g'
         } else if (['lb', 'lbs', 'pound', 'pounds'].includes(unit)) {
-          amount = (numAmount * 0.453592).toFixed(2)
+          amount = (scaledAmount * 0.453592).toFixed(2)
           unit = 'kg'
         } else if (['cup', 'cups'].includes(unit)) {
-          amount = Math.round(numAmount * 240)
+          amount = Math.round(scaledAmount * 240)
           unit = 'ml'
         } else if (['tbsp', 'tablespoon', 'tablespoons'].includes(unit)) {
-          amount = Math.round(numAmount * 15)
+          amount = Math.round(scaledAmount * 15)
           unit = 'ml'
         } else if (['tsp', 'teaspoon', 'teaspoons'].includes(unit)) {
-          amount = Math.round(numAmount * 5)
+          amount = Math.round(scaledAmount * 5)
           unit = 'ml'
         } else if (['fl oz', 'fluid ounce', 'fluid ounces'].includes(unit)) {
-          amount = Math.round(numAmount * 29.5735)
+          amount = Math.round(scaledAmount * 29.5735)
           unit = 'ml'
         } else if (['°f', 'fahrenheit', 'f'].includes(unit)) {
-          amount = Math.round((numAmount - 32) * 5/9)
+          amount = Math.round((scaledAmount - 32) * 5/9)
           unit = '°C'
+        } else {
+          amount = scaledAmount % 1 !== 0 ? scaledAmount.toFixed(1) : scaledAmount
         }
       }
     }
@@ -144,7 +154,7 @@ const convertedIngredients = computed(() => {
 
 async function copyIngredients() {
   if (!recipe.value?.ingredients?.length) return
-  const text = `${recipe.value.title} - Ingredients:\n` +
+  const text = `${recipe.value.title} (${servings.value} servings) - Ingredients:\n` +
     convertedIngredients.value
       .map((i) => `• ${i.amount ? i.amount + ' ' : ''}${i.unit ? i.unit + ' ' : ''}${i.name}`)
       .join('\n')
@@ -172,6 +182,7 @@ watch(
     completedSteps.value.clear()
     copyStatus.value = ''
     unitSystem.value = 'metric'
+    servings.value = 4
     try {
       recipe.value = await fetchRecipe(id)
       status.value = ''
@@ -232,6 +243,26 @@ watch(
         <div class="recipe-section-header">
           <h2>Ingredients</h2>
           <div class="recipe-actions">
+            <div class="servings-adjuster">
+              <span class="servings-label">Servings:</span>
+              <button
+                type="button"
+                class="servings-btn"
+                @click="servings = Math.max(1, servings - 1)"
+                title="Decrease servings"
+              >
+                -
+              </button>
+              <span class="servings-count">{{ servings }}</span>
+              <button
+                type="button"
+                class="servings-btn"
+                @click="servings = servings + 1"
+                title="Increase servings"
+              >
+                +
+              </button>
+            </div>
             <div class="unit-toggle-group">
               <button
                 type="button"
@@ -273,10 +304,10 @@ watch(
               <span>{{ copyStatus || 'Copy' }}</span>
             </button>
             <button
-              v-if="checkedIngredients.size > 0 || completedSteps.size > 0"
+              v-if="checkedIngredients.size > 0 || completedSteps.size > 0 || servings !== 4"
               type="button"
               class="reset-btn"
-              @click="resetChecklist"
+              @click="resetChecklist(); servings = 4;"
             >
               Reset
             </button>
@@ -345,6 +376,39 @@ watch(
 </template>
 
 <style scoped>
+.servings-adjuster {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-bg, #1a1d26);
+  border: 1px solid var(--card-border, #2a2e3d);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 13px;
+  color: var(--text-muted, #94a3b8);
+  margin-right: 6px;
+}
+.servings-label {
+  font-weight: 500;
+}
+.servings-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-h, #fff);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.servings-btn:hover {
+  color: var(--primary, #aa3bff);
+}
+.servings-count {
+  font-weight: 600;
+  color: var(--text-h, #fff);
+  min-width: 16px;
+  text-align: center;
+}
 .unit-toggle-group {
   display: inline-flex;
   background: var(--card-bg, #1a1d26);
