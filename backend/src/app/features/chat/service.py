@@ -1,14 +1,7 @@
 import os
-from typing import Annotated
-
-from fastapi import APIRouter, Body
 from google import genai
 from google.genai.types import Content, Part
-from pydantic import BaseModel
-
-from store import list_recipes as store_list_recipes
-
-router = APIRouter()
+from src.app.features.recipes.service import list_recipes
 
 _client: genai.Client | None = None
 
@@ -35,25 +28,10 @@ Guidelines:
 - If a user asks about something completely unrelated to cooking or food, politely redirect them back to food topics."""
 
 
-class Message(BaseModel):
-    role: str  # "user" or "assistant"
-    content: str
-
-
-class ChatRequest(BaseModel):
-    messages: list[Message]
-
-
-class ChatResponse(BaseModel):
-    reply: str
-
-
-@router.post("/api/chat", response_model=ChatResponse)
-async def chat(payload: Annotated[ChatRequest, Body()]) -> ChatResponse:
+async def get_chat_response(messages: list) -> str:
     client = _get_client()
 
-    # Build recipe context for the system prompt
-    recipes = store_list_recipes()
+    recipes = list_recipes()
     recipe_lines = []
     for r in recipes:
         ing_list = []
@@ -77,13 +55,9 @@ async def chat(payload: Annotated[ChatRequest, Body()]) -> ChatResponse:
         + recipe_context
     )
 
-    # Convert our message history to the Gemini history format
-    messages = payload.messages
-
     if not messages:
-        return ChatResponse(reply="Hi! I'm your cooking assistant. How can I help you today? 👨‍🍳")
+        return "Hi! I'm your cooking assistant. How can I help you today? 👨‍🍳"
 
-    # Build history (all messages except the last user message)
     history: list[Content] = []
     for msg in messages[:-1]:
         role = "user" if msg.role == "user" else "model"
@@ -103,8 +77,6 @@ async def chat(payload: Annotated[ChatRequest, Body()]) -> ChatResponse:
         )
 
         response = chat_session.send_message(last_message.content)
-        reply_text = response.text or "I'm just a cooking assistant, so I can only help you with recipes and food-related questions! 🍳"
+        return response.text or "I'm just a cooking assistant, so I can only help you with recipes and food-related questions! 🍳"
     except Exception:
-        reply_text = "I'm just a cooking assistant, so I can't help with that question. What's cooking in your kitchen today? 🍳"
-
-    return ChatResponse(reply=reply_text)
+        return "I'm just a cooking assistant, so I can't help with that question. What's cooking in your kitchen today? 🍳"

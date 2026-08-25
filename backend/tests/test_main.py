@@ -1,10 +1,10 @@
 from urllib.error import HTTPError
-
+import os
 import pytest
 from fastapi.testclient import TestClient
 
-import admin
-import store
+from src.app.features.admin import router as admin
+from src.app.features.recipes import service as store
 from main import app
 
 client = TestClient(app)
@@ -180,7 +180,9 @@ def test_admin_uploads_image_to_supabase_storage(monkeypatch):
 
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("SUPABASE_SECRET_KEY", "sb_secret_storage")
-    monkeypatch.setattr(admin, "urlopen", fake_urlopen)
+    import sys
+    admin_module = sys.modules["src.app.features.admin.router"]
+    monkeypatch.setattr(admin_module, "urlopen", fake_urlopen)
 
     response = client.post(
         "/api/admin/recipes",
@@ -248,7 +250,9 @@ def test_admin_does_not_create_recipe_when_supabase_upload_fails(monkeypatch):
 
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
-    monkeypatch.setattr(admin, "urlopen", failed_urlopen)
+    import sys
+    admin_module = sys.modules["src.app.features.admin.router"]
+    monkeypatch.setattr(admin_module, "urlopen", failed_urlopen)
 
     response = client.post(
         "/api/admin/recipes",
@@ -299,5 +303,6 @@ def test_legacy_recipes_json_migration(monkeypatch, tmp_path):
     # Querying recipes should automatically migrate the JSON content into SQLite
     items = store.list_recipes()
     assert len(items) == 1
+
     assert items[0].title == "Legacy Pasta"
     assert items[0].ingredients == ["Pasta"]

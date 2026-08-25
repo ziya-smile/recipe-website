@@ -9,9 +9,9 @@ from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, HTTPExc
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from auth import require_admin
-from models import RecipeCreate, Ingredient
-from store import create_recipe, update_recipe, delete_recipe, get_recipe, get_db_type, list_recipes, save_image
+from app.features.auth.service import require_admin
+from app.features.recipes.models import RecipeCreate, Ingredient
+from app.core.database import create_recipe, update_recipe, delete_recipe, get_recipe, get_db_type, list_recipes, save_image
 
 try:
     import cloudinary

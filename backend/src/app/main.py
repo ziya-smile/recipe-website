@@ -1,0 +1,96 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+from src.app.features.admin.router import router as admin_router
+from src.app.features.chat.router import router as chat_router
+# Note: Recipe routes are still defined in the entry point (main.py), 
+# but they rely on core and feature services.
+from src.app.features.recipes.models import Recipe, RecipeCreate
+from src.app.features.recipes.service import (
+    create_recipe,
+    delete_recipe,
+    get_image,
+    get_recipe as store_get_recipe,
+    list_recipes as store_list_recipes,
+)
+from src.app.core.database import uploads_dir
+from fastapi import HTTPException, status, Response
+from fastapi.responses import FileResponse
+
+def create_app() -> FastAPI:
+    app = FastAPI(title="Recipe API", description="API and Admin Panel for Recipes")
+
+    # Allow all origins for development and production
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Routes
+    app.include_router(admin_router)
+    app.include_router(chat_router)
+
+    @app.get("/api/media/{filename}")
+    def media(filename: str):
+        filename = Path(filename).name
+        stored = get_image(filename)
+        if stored is not None:
+            content_type, data = stored
+            return Response(
+                content=data,
+                media_type=content_type,
+                headers={"Cache-Control": "public, max-age=31536000, immutable"},
+            )
+
+        legacy_path = uploads_dir() / filename
+        if legacy_path.is_file():
+            return FileResponse(legacy_path)
+
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    @app.get("/")
+    def read_root():
+        return {"message": "Hello from FastAPI!"}
+
+    @app.get("/api/recipes", response_model=list[Recipe])
+    def list_recipes(q: str | None = None):
+        recipes = store_list_recipes()
+        if not q:
+            return recipes
+        query = q.strip().lower()
+        return [
+            recipe
+            for recipe in recipes
+            if query in recipe.title.lower()
+            or query in recipe.description.lower()
+            or any(
+                query in (ingredient.name if hasattr(ingredient, 'name') else str(ingredient)).lower()
+                for ingredient in recipe.ingredients
+            )
+        ]
+
+    @app.get("/api/recipes/{recipe_id}", response_model=Recipe)
+    def get_recipe(recipe_id: int):
+        recipe = store_get_recipe(recipe_id)
+        if recipe is not None:
+            return recipe
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    @app.post("/api/recipes", response_model=Recipe, status_code=status.HTTP_201_CREATED)
+    def add_recipe(payload: RecipeCreate):
+        if not payload.title.strip():
+            raise HTTPException(status_code=400, detail="Recipe title is required")
+        return create_recipe(payload)
+
+    @app.delete("/api/recipes/{recipe_id}")
+    def remove_recipe(recipe_id: int):
+        deleted = delete_recipe(recipe_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Recipe not found")
+        return {"message": "Recipe deleted successfully", "id": recipe_id}
+
+    return app
